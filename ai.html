@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Hexagon</title>
+  <link rel="icon" type="image/png" href="IMAGE/logo1.png">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; }
+    #chatbox { width: 80%; margin: 20px auto; background: #fff; padding: 20px; border-radius: 10px; }
+    .msg { margin: 10px 0; }
+    .user { text-align: right; color: #fff; background: #4a90e2; display: inline-block; padding: 8px 12px; border-radius: 10px; }
+    .ai { text-align: left; background: #e5e5ea; display: inline-block; padding: 8px 12px; border-radius: 10px; }
+
+    #input-area { margin-top: 20px; display: flex; gap: 10px; }
+    #prompt { flex: 1; padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #ccc; }
+    button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; }
+
+    /* animasi mengetik */
+    .typing {
+      font-style: italic;
+      color: gray;
+      margin: 5px 0;
+    }
+    .dots::after {
+      content: '...';
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0% { content: ''; }
+      33% { content: '.'; }
+      66% { content: '..'; }
+      100% { content: '...'; }
+    }
+    img {
+      width: 67px;
+      height: 70px;
+    }
+    .messages {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 15px;
+      overflow-y: auto;
+      border-radius: 12px;
+    }
+
+    .msg {
+      display: inline-block;
+      max-width: 70%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .msg.ai {
+      background: #e5e7eb;
+      color: #111;
+      align-self: flex-start;
+      margin-right: auto;
+      border-bottom-left-radius: 6px;
+    }
+
+    .msg.user {
+      background: #3b82f6;
+      color: #fff;
+      align-self: flex-end;
+      margin-left: auto;
+      border-bottom-right-radius: 6px;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="chatbox">
+    <header style="display: flex;">
+      <img src="IMAGE/logo1.png" alt="">
+      <h2>Chat dengan Hexagon</h2>
+    </header>
+    <hr>
+    <div id="messages" class="messages"></div>
+
+    <div id="input-area">
+      <input type="text" id="prompt" placeholder="Tulis pesanmu di sini..." />
+      <button onclick="sendMessage()" type="submit">Kirim</button>
+    </div>
+
+    <!-- Parameter -->
+    <div style="margin-top:15px;">
+      <label>Max Tokens: <input type="number" id="max_tokens" value="1000"></label>
+      <label>Temp: <input type="number" id="temp" step="0.1" value="0.3"></label>
+      <label>Top P: <input type="number" id="top_p" step="0.1" value="0.9"></label>
+      <label>Repeat Penalty: <input type="number" id="repeat_penalty" step="0.1" value="1.2"></label>
+    </div>
+  </div>
+
+  <script> 
+  async function sendMessage() { 
+    const prompt = document.getElementById("prompt").value; 
+      if (!prompt) return; 
+      const messagesDiv = document.getElementById("messages"); 
+      // tampilkan pesan user 
+    const userMsg = document.createElement("div"); 
+    userMsg.className = "msg user"; 
+    userMsg.textContent = prompt; 
+    messagesDiv.appendChild(userMsg); 
+    // tambahkan spasi chat 
+    const spasi = document.createElement("br") 
+    messagesDiv.appendChild(spasi); 
+    // tambahkan animasi "sedang diproses..." 
+    const typingMsg = document.createElement("div"); 
+    typingMsg.className = "typing dots"; 
+    typingMsg.textContent = "AI Hexagon sedang mengetik : "; 
+    messagesDiv.appendChild(typingMsg); 
+    // ambil parameter dari input 
+    const params = { 
+    prompt: prompt, max_tokens: parseInt(document.getElementById("max_tokens").value), 
+    temp: parseFloat(document.getElementById("temp").value), 
+    top_p: parseFloat(document.getElementById("top_p").value), 
+    repeat_penalty: parseFloat(document.getElementById("repeat_penalty").value) }; 
+        try { 
+          const response = await fetch("http://localhost:5000/chat", { 
+            method: "POST", 
+            headers: { "Content-Type": "application/json" }, 
+            body: JSON.stringify(params) 
+          }); 
+          const data = await response.json(); 
+          typingMsg.remove(); 
+          const aiMsg = document.createElement("div"); 
+          aiMsg.className = "msg ai"; 
+          aiMsg.innerHTML = (data.response || data.error || "Tidak ada jawaban.") .replace(/\n/g, "<br>"); 
+          messagesDiv.appendChild(aiMsg); 
+          const spasi = document.createElement("br") 
+          messagesDiv.appendChild(spasi); 
+        } 
+        catch (err) { 
+          typingMsg.remove(); 
+            const errMsg = document.createElement("div"); 
+            errMsg.className = "msg ai"; 
+            errMsg.textContent = "Koneksi gagal: " + err.message; messagesDiv.appendChild(errMsg); 
+        } document.getElementById("prompt").value = ""; 
+    } 
+  </script>
+</body>
+</html>
